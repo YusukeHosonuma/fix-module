@@ -1,0 +1,13 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "fix-module:lib"
+
+    - path: "./app/Main.hs"
+      component: "fix-module:exe:fix-module"
+
+    - path: "./app/Paths_fix_module.hs"
+      component: "fix-module:exe:fix-module"
+
+    - path: "./test"
+      component: "fix-module:test:fix-module-test"
