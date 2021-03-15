@@ -24,6 +24,9 @@ source-repository head
 
 library
   exposed-modules:
+      Foo.Bar.Fuga
+      Foo.Bar.Valid
+      Foo.Hoge
       Lib
   other-modules:
       Paths_test_asset
