@@ -29,6 +29,7 @@ library:
   - extra
   - filepath
   - text
+  - transformers
   - unordered-containers
   - yaml
 
@@ -44,6 +45,7 @@ executables:
     dependencies:
     - fix-module
     - directory
+    - transformers
 
 tests:
   fix-module-test:
@@ -56,6 +58,7 @@ tests:
     - -Wall
     dependencies:
     - fix-module
+    - process
     - tasty
     - tasty-hunit
-    - process
+    - transformers
