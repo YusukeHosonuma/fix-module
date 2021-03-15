@@ -8,8 +8,7 @@ import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Reader
 import           Data.List
 import           FixModule.Package
-import           System.Directory           (doesDirectoryExist,
-                                             getDirectoryContents)
+import           System.Directory
 import           System.FilePath.Posix
 import           System.IO.Extra
 

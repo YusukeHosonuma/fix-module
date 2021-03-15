@@ -1,5 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Main where
 
 import           Control.Exception
@@ -8,7 +6,7 @@ import           Control.Monad.Trans.Reader
 import           FixModule.Module
 import           System.Directory
 import           System.Environment
-import           System.Exit                (exitFailure, exitSuccess)
+import           System.Exit
 
 main :: IO ()
 main = do
