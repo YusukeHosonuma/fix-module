@@ -1,0 +1,32 @@
+name: PR
+
+on: [pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Cache .stack
+      uses: actions/cache@v2
+      with:
+        path: ~/.stack
+        key: "${{ runner.os }}-stack-${{ hashFiles('**/stack.yaml.lock') }}"
+
+    - uses: haskell/actions/setup@v1.2
+      with:
+        ghc-version: 8.10.3
+        enable-stack: true
+        stack-version: 'latest'
+
+    - name: Install dependencies
+      run: stack --system-ghc build --only-dependencies
+
+    - name: Run tests
+      run: stack --system-ghc test --local-bin-path=./bin
