@@ -19,8 +19,9 @@ newtype Env = Env { isVerbose :: Bool }
 
 fixModule :: FilePath -> ReaderT Env IO ()
 fixModule rootDir = do
-    dirs <- lift $ map (rootDir </>) <$> lookupSourceDirs
-    mapM_ fixModuleRecursive dirs
+    dirs <- lift lookupSourceDirs
+    verbose $ "Found source-diretories:\n" ++ unlines (map ("- " <>) dirs)
+    mapM_ (fixModuleRecursive . (rootDir </>)) dirs
 
 fixModuleRecursive :: FilePath -> ReaderT Env IO ()
 fixModuleRecursive rootDir = do
