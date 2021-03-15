@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  release:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: haskell/actions/setup@v1.2
+      with:
+        ghc-version: 8.10.3
+        enable-stack: true
+        stack-version: 'latest'
+
+    - name: Install dependencies
+      run: stack --system-ghc build --only-dependencies
+
+    - name: Run tests
+      run: stack --system-ghc test
+
+    - name: Install
+      run: stack --system-ghc install --local-bin-path=./bin
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./bin/fix-module
+        asset_name: fix-module
+        asset_content_type: application/octet-stream
+
+    - name: Set value for formula
+      id: set_value_for_formula
+      run: |
+        SHA256=$(shasum -a 256 ./bin/fix-module | awk '{print $1}')
+        echo ::set-output name=SHA256::$SHA256
+
+    - name: Update Formula Repository
+      uses: peter-evans/repository-dispatch@v1
+      with:
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+        repository: YusukeHosonuma/homebrew-fix-module
+        event-type: released
+        client-payload: '
+          {
+            "ref": "${{ github.ref }}",
+            "sha256": "${{ steps.set_value_for_formula.outputs.SHA256 }}",
+            "url": "${{ steps.create_release.outputs.upload_url }}"
+          }
+        '
