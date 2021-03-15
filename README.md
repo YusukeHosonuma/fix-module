@@ -4,11 +4,13 @@ A CLI tool that auto-fix module name of .hs files from the definition of `packag
 
 ```bash
 $ cd <stack-project-root>
-$ fix-module # Warning: This command will overwrite .hs files
+$ fix-module           # Warning: This command will overwrite .hs files
+$ fix-module --verbose # With verbose log
 ```
 
 ## TODO
-- [ ] Support `.cabal`
+- [ ] Add support to `.cabal`.
+- [ ] Auto-fix import. (undecided)
 
 ## Installation
 
