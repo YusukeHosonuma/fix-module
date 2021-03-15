@@ -1,38 +1,49 @@
-module FixModule.Module (fixModuleRecursive)  where
+module FixModule.Module
+    ( fixModule
+    , Env (..)
+    ) where
 
 import           Control.Monad
+import           Control.Monad.Trans.Class
+import           Control.Monad.Trans.Reader
 import           Data.List
-import           System.Directory
+import           FixModule.Package
+import           System.Directory           (doesDirectoryExist,
+                                             getDirectoryContents)
 import           System.FilePath.Posix
 import           System.IO.Extra
 
 type ModuleName = String
 
-fixModuleRecursive :: FilePath -> IO ()
+newtype Env = Env { isVerbose :: Bool }
+
+fixModule :: FilePath -> ReaderT Env IO ()
+fixModule rootDir = do
+    dirs <- lift $ map (rootDir </>) <$> lookupSourceDirs
+    mapM_ fixModuleRecursive dirs
+
+fixModuleRecursive :: FilePath -> ReaderT Env IO ()
 fixModuleRecursive rootDir = do
-    ps <- findHaskellFilePathes rootDir
+    ps <- lift $ findHaskellFilePathes rootDir
     mapM_ (fixModuleFile rootDir) ps
 
 --------------------------------------------------------------------------------
 
-findHaskellFilePathes :: FilePath -> IO [FilePath]
-findHaskellFilePathes path = do
-    xs <- map (path </>) . filter (`notElem` [".", ".."]) <$> getDirectoryContents path
-    let hsFiles = filter (".hs" `isExtensionOf`) xs
-    dirs <- filterM doesDirectoryExist xs
-    subHsFiles <- concat <$> mapM findHaskellFilePathes dirs
-    return $ hsFiles ++ subHsFiles
-
-fixModuleFile :: FilePath -> FilePath -> IO ()
+fixModuleFile :: FilePath -> FilePath -> ReaderT Env IO ()
 fixModuleFile rootDir target = do
     let mName = moduleName rootDir target
-    valid <- isValidModule mName target
+    valid <- lift $ isValidModule mName target
     if valid
         then
-            putStrLn $ "Skip: " ++ target -- verbose に対応
+            verbose $ "[skip] " ++ target
         else do
-            updateFileWith target (fixModuleContent mName)
-            putStrLn $ "Done: " ++ target
+            lift $ updateFileWith target (fixModuleContent mName)
+            verbose $ "[done] " ++ target
+
+verbose :: String -> ReaderT Env IO ()
+verbose s = do
+    v <- asks isVerbose
+    when v $ lift $ putStrLn s
 
 fixModuleContent :: ModuleName -> String -> String
 fixModuleContent mName = unlines . map (fixModuleLine mName) . lines
@@ -84,6 +95,14 @@ moduleName root filePath =
             modulePath = tail $ drop (length root) filePath
 
 --------------------------------------------------------------------------------
+
+findHaskellFilePathes :: FilePath -> IO [FilePath]
+findHaskellFilePathes path = do
+    xs <- map (path </>) . filter (`notElem` [".", ".."]) <$> getDirectoryContents path
+    let hsFiles = filter (".hs" `isExtensionOf`) xs
+    dirs <- filterM doesDirectoryExist xs
+    subHsFiles <- concat <$> mapM findHaskellFilePathes dirs
+    return $ hsFiles ++ subHsFiles
 
 updateFileWith :: FilePath -> (String -> String) -> IO ()
 updateFileWith fp f = do

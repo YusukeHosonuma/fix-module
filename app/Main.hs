@@ -4,19 +4,21 @@ module Main where
 
 import           Control.Exception
 import           Control.Monad
-import           FixModule
+import           Control.Monad.Trans.Reader
+import           FixModule.Module
 import           System.Directory
 import           System.Environment
-import           System.Exit        (exitFailure, exitSuccess)
+import           System.Exit                (exitFailure, exitSuccess)
 
 main :: IO ()
 main = do
     args <- getArgs
     when ("--version" `elem` args) printVersion
+    let verbose = "--verbose" `elem` args
     exist <- doesFileExist "package.yaml"
     unless exist exitPackageYamlNotFound
     pwd <- getCurrentDirectory
-    fixModule pwd `catch` reportException
+    runReaderT (fixModule pwd) (Env verbose) `catch` reportException
 
 printVersion :: IO ()
 printVersion = do
